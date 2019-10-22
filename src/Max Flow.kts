@@ -3,6 +3,7 @@ import java.util.*
 import java.lang.*
 import java.io.*
 import java.util.LinkedList
+import kotlin.math.min
 
 internal class MaxFlow {
 
@@ -30,7 +31,7 @@ internal class MaxFlow {
             val u = queue.poll()
 
             for (v in 0 until V) {
-                if (visited[v] == false && rGraph[u][v] > 0) {
+                if (!visited[v] && rGraph[u][v] > 0) {
                     queue.add(v)
                     parent[v] = u
                     visited[v] = true
@@ -85,7 +86,7 @@ internal class MaxFlow {
             v = t
             while (v != s) {
                 u = parent[v]
-                path_flow = Math.min(path_flow, rGraph[u][v])
+                path_flow = min(path_flow, rGraph[u][v])
                 v = parent[v]
             }
 
@@ -116,7 +117,13 @@ fun main() {
     // Driver program to test above functions
     fun main() {
         // Let us create a graph shown in the above example
-        val graph = arrayOf(intArrayOf(0, 16, 13, 0, 0, 0), intArrayOf(0, 0, 10, 12, 0, 0), intArrayOf(0, 4, 0, 0, 14, 0), intArrayOf(0, 0, 9, 0, 0, 20), intArrayOf(0, 0, 0, 7, 0, 4), intArrayOf(0, 0, 0, 0, 0, 0))
+        val graph = arrayOf(
+            intArrayOf(0, 16, 13, 0, 0, 0),
+            intArrayOf(0, 0, 10, 12, 0, 0),
+            intArrayOf(0, 4, 0, 0, 14, 0),
+            intArrayOf(0, 0, 9, 0, 0, 20),
+            intArrayOf(0, 0, 0, 7, 0, 4),
+            intArrayOf(0, 0, 0, 0, 0, 0))
         val m = MaxFlow()
 
         System.out.println("The maximum possible flow is " +

@@ -1,20 +1,21 @@
 import java.util.*
-import java.util.ArrayList
-import kotlin.collections.ArrayList
 
 class TransportNet<T>(capacity: Int = 10) {
 
 
+    class Vertex<T>(val vertex: T)
     class Edge(var capacity: Int, var Flow: Int = 0) {
         fun print() {
             println("Capacity = $capacity, Flux = $Flow")
         }
     }
 
+    private val nilEdge = Edge(-1, -1)
+
     private var n = 0
     private var alpha = 0
-    private val vertexes= arrayOfNulls<Any>(capacity) as Array<T?>
-    private var matrix = Array(capacity) { arrayOfNulls<Edge>(capacity)}
+    private val vertexes = arrayOfNulls<Any>(capacity) as Array<T?>
+    private var matrix = Array(capacity) { Array(capacity) { nilEdge } }
 
     fun addVertex(v: T) {
         if (n > vertexes.size)
@@ -36,7 +37,7 @@ class TransportNet<T>(capacity: Int = 10) {
         if (v > n || w > n) {
             throw IndexOutOfBoundsException()
         }
-        return matrix[v][w] != null
+        return matrix[v][w] != nilEdge
     }
 
     fun order(): Int {
@@ -54,7 +55,7 @@ class TransportNet<T>(capacity: Int = 10) {
         return vertexes[v]
     }
 
-    fun getMatrix(): Array<Array<Edge?>> {
+    fun getMatrix(): Array<Array<Edge>> {
         return matrix
     }
 
@@ -62,9 +63,9 @@ class TransportNet<T>(capacity: Int = 10) {
         if (v > n) {
             throw IndexOutOfBoundsException()
         }
-        val lst = arrayListOf<Int>()
+        val lst = mutableListOf<Int>()
         for (w in 0 until n)
-            if (matrix[v][w] != null)
+            if (matrix[v][w] != nilEdge)
                 lst.add(w)
         return lst
     }
@@ -81,10 +82,10 @@ class TransportNet<T>(capacity: Int = 10) {
             c.remove()
             process(fr)
             lst = getAdj(fr)
-            for (integer in lst) {
-                if (!visited[integer]) {
-                    visited[integer] = true
-                    c.add(integer)
+            for (i in lst) {
+                if (!visited[i]) {
+                    visited[i] = true
+                    c.add(i)
                 }
             }
         }

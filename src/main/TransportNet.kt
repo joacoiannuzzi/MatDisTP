@@ -1,12 +1,14 @@
+package main
+
 import java.util.*
 
 class TransportNet<T>(capacity: Int = 10) {
 
 
     class Vertex<T>(val vertex: T)
-    class Edge(var capacity: Int, var Flow: Int = 0) {
+    class Edge(var capacity: Int, var flow: Int = 0) {
         fun print() {
-            println("Capacity = $capacity, Flux = $Flow")
+            println("Capacity = $capacity, Flow = $flow")
         }
     }
 
@@ -33,6 +35,8 @@ class TransportNet<T>(capacity: Int = 10) {
         }
     }
 
+    operator fun set(v: Int, w: Int, capacity: Int) = addEdge(v, w, capacity)
+
     fun existsEdge(v: Int, w: Int): Boolean {
         if (v > n || w > n) {
             throw IndexOutOfBoundsException()
@@ -40,13 +44,11 @@ class TransportNet<T>(capacity: Int = 10) {
         return matrix[v][w] != nilEdge
     }
 
-    fun order(): Int {
-        return n
-    }
+    fun order() = n
 
-    fun quantityOfEdges(): Int {
-        return alpha
-    }
+
+    fun quantityOfEdges() = alpha
+
 
     fun getVertex(v: Int): T? {
         if (v > n) {
@@ -55,9 +57,12 @@ class TransportNet<T>(capacity: Int = 10) {
         return vertexes[v]
     }
 
-    fun getMatrix(): Array<Array<Edge>> {
-        return matrix
-    }
+    fun getEdge(v: Int, w: Int) = matrix[v][w]
+
+    operator fun get(v: Int, w: Int) = getEdge(v, w)
+
+
+    fun getMatrix() = matrix
 
     fun getAdj(v: Int): List<Int> {
         if (v > n) {
@@ -70,7 +75,7 @@ class TransportNet<T>(capacity: Int = 10) {
         return lst
     }
 
-    fun <T> bfs(v: Int) {
+    fun <T> bfs(v: Int = 0) {
         var fr: Int
         val visited = BooleanArray(order())
         val c = LinkedList<Int>()
@@ -78,8 +83,7 @@ class TransportNet<T>(capacity: Int = 10) {
         c.add(v)
         visited[v] = true
         while (!c.isEmpty()) {
-            fr = c.peek()
-            c.remove()
+            fr = c.remove()
             process(fr)
             lst = getAdj(fr)
             for (i in lst) {

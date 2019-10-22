@@ -6,6 +6,8 @@ import java.util.LinkedList
 
 internal class MaxFlow {
 
+    val V = 6
+
     /* Returns true if there is a path from source 's' to sink
 	't' in residual graph. Also fills parent[] to store the
 	path */
@@ -18,13 +20,13 @@ internal class MaxFlow {
 
         // Create a queue, enqueue source vertex and mark
         // source vertex as visited
-        val queue = LinkedList<Integer>()
+        val queue = LinkedList<Int>()
         queue.add(s)
         visited[s] = true
         parent[s] = -1
 
         // Standard BFS Loop
-        while (queue.size() !== 0) {
+        while (queue.size !== 0) {
             val u = queue.poll()
 
             for (v in 0 until V) {
@@ -105,17 +107,20 @@ internal class MaxFlow {
         return max_flow
     }
 
-    class companion {
-        val V = 6 //Number of vertices in graph
 
-        // Driver program to test above functions
-        fun main() {
-            // Let us create a graph shown in the above example
-            val graph = arrayOf(intArrayOf(0, 16, 13, 0, 0, 0), intArrayOf(0, 0, 10, 12, 0, 0), intArrayOf(0, 4, 0, 0, 14, 0), intArrayOf(0, 0, 9, 0, 0, 20), intArrayOf(0, 0, 0, 7, 0, 4), intArrayOf(0, 0, 0, 0, 0, 0))
-            val m = MaxFlow()
+}
 
-            System.out.println("The maximum possible flow is " + m.fordFulkerson(graph, 0, 5))
+fun main() {
+    val V = 6 //Number of vertices in graph
 
-        }
+    // Driver program to test above functions
+    fun main() {
+        // Let us create a graph shown in the above example
+        val graph = arrayOf(intArrayOf(0, 16, 13, 0, 0, 0), intArrayOf(0, 0, 10, 12, 0, 0), intArrayOf(0, 4, 0, 0, 14, 0), intArrayOf(0, 0, 9, 0, 0, 20), intArrayOf(0, 0, 0, 7, 0, 4), intArrayOf(0, 0, 0, 0, 0, 0))
+        val m = MaxFlow()
+
+        System.out.println("The maximum possible flow is " +
+                m.fordFulkerson(graph, 0, 5))
+
     }
 }

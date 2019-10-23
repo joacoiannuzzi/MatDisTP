@@ -1,24 +1,27 @@
-import main.MaxFlow
+import main.FlowNetwork
+import org.junit.Test
 
 fun main() {
-    val V = 6 //Number of vertices in graph
 
-    // Driver program to test above functions
-    // Let us create a graph shown in the above example
-    val graph = arrayOf(
-        intArrayOf(0, 16, 13, 0, 0, 0),
-        intArrayOf(0, 0, 10, 12, 0, 0),
-        intArrayOf(0, 4, 0, 0, 14, 0),
-        intArrayOf(0, 0, 9, 0, 0, 20),
-        intArrayOf(0, 0, 0, 7, 0, 4),
-        intArrayOf(0, 0, 0, 0, 0, 0)
-    )
-    val m = MaxFlow()
+    val t = FlowNetwork<String>(6)
+    t.addVertex("a")
+    t.addVertex("b")
+    t.addVertex("d")
+    t.addVertex("g")
+    t.addVertex("h")
+    t.addVertex("z")
 
-    System.out.println(
-        "The maximum possible flow is " +
-                m.fordFulkerson(graph, 0, 5)
-    )
+    t["a", "b"] = 5; t["a", "g"] = 7
+    t["b", "d"] = 4; t["b", "h"] = 6
+    t["d", "z"] = 5
+    t["g", "h"] = 5
+    t["h", "d"] = 2; t["h", "z"] = 6
 
+    println(t.fordFulkerson("a", "z"))
+}
+
+
+@Test
+fun test() {
 
 }

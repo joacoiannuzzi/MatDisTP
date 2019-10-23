@@ -58,24 +58,12 @@ class MaxFlow {
         // not)
         val rGraph = graph.copyOf()
 
-//        u = 0
-//        while (u < V) {
-//
-//            v = 0
-//            while (v < V) {
-//                rGraph[u][v] = graph[u][v]
-//                v++
-//            }
-//
-//            u++
-//        }
-
         // This array is filled by BFS and to store path
         val parent = IntArray(V)
 
         var max_flow = 0 // There is no flow initially
 
-        // Augment the flow while tere is path from source
+        // Augment the flow while there is path from source
         // to sink
         while (bfs(rGraph, s, t, parent)) {
             // Find minimum residual capacity of the edhes

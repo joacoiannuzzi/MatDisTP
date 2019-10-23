@@ -11,8 +11,13 @@ class FlowNetwork<T>(capacity: Int = 10) {
         private set
     var alpha = 0
         private set
-    private val vertexes = arrayOfNulls<Any>(capacity) as Array<T?>
+    private var vertexes = arrayOfNulls<Any>(capacity) as Array<T?>
     private var matrix = Array(capacity) { Array(capacity) { Edge(Int.MAX_VALUE) } }
+
+    constructor(vertexes: Array<T>) : this(vertexes.size) { // 2º constructor
+        this.vertexes = vertexes as Array<T?>
+        this.order = vertexes.size
+    }
 
     fun addVertex(v: T) {
         vertexes[order++] = v

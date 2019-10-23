@@ -12,9 +12,9 @@ class FlowNetwork<T>(capacity: Int = 10) {
     var alpha = 0
         private set
     private var vertexes = arrayOfNulls<Any>(capacity) as Array<T?>
-    private var matrix = Array(capacity) { Array(capacity) { Edge(Int.MAX_VALUE) } }
+    private var matrix = Array(capacity) { Array(capacity) { Edge(-1) } }
 
-    constructor(vertexes: Array<T>) : this(vertexes.size) { // 2º constructor
+    constructor(vararg vertexes: T) : this(vertexes.size) { // 2º constructor
         this.vertexes = vertexes as Array<T?>
         this.order = vertexes.size
     }
@@ -36,7 +36,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
 
     fun existsEdge(v: T, w: T) = existsEdge(vertexes.indexOf(v), vertexes.indexOf(w))
 
-    private fun existsEdge(v: Int, w: Int) = matrix[v][w].capacity != Int.MAX_VALUE
+    private fun existsEdge(v: Int, w: Int) = matrix[v][w].capacity > 0
 
     fun getVertex(v: Int) = vertexes[v]
 
@@ -54,7 +54,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
         }
         val lst = mutableListOf<Int>()
         for (w in 0 until order)
-            if (matrix[v][w].capacity != Int.MAX_VALUE)
+            if (existsEdge(v, w))
                 lst.add(w)
         return lst
     }
@@ -95,18 +95,18 @@ class FlowNetwork<T>(capacity: Int = 10) {
 
             while (s != sourceIndex) {
                 u = parent[s]
-                pathFlow = min(pathFlow, matrix[u][s].capacity - matrix[u][s].flow)
+                pathFlow = min(pathFlow, matrix[u][s].capacity)
                 s = parent[s]
             }
-            maxFlow += pathFlow
 
             s = sinkIndex
             while (s != sourceIndex) {
                 u = parent[s]
-                matrix[u][s].flow -= pathFlow
-                matrix[s][u].flow += pathFlow
+                matrix[u][s].capacity -= pathFlow
+                matrix[s][u].capacity += pathFlow
                 s = parent[s]
             }
+            maxFlow += pathFlow
         }
         return maxFlow
     }

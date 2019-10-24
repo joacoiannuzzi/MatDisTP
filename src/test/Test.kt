@@ -8,7 +8,8 @@ class Test {
 
     private lateinit var t: FlowNetwork<String>
 
-    @Before
+
+    @Before // this fun is called before every @Test
     fun createFlowNetwork() {
         t = FlowNetwork("a", "b", "d", "g", "h", "z")
 

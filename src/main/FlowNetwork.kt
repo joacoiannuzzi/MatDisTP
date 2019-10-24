@@ -79,20 +79,20 @@ class FlowNetwork<T>(capacity: Int = 10) {
         return visited[end]
     }
 
-    private data class Tag(val parent: Int, var flow: Int)
+    private data class Tag(val parent: Int, val flow: Int)
 
     fun calculateMaxFlow(source: T, sink: T): Int {
         val sourceIndex = vertexes.indexOf(source)
         val sinkIndex = vertexes.indexOf(sink)
 
-        var s = 0
-        var u = 0
+        var s: Int
+        var u: Int
         val tags = Array(order) { Tag(-1, Int.MAX_VALUE) } // create array of length order with all values nil tags
         var maxFlow = 0
 
         while (bfs(sourceIndex, sinkIndex, tags)) {
 
-            val pathFlow = tags[sinkIndex].flow // capacity of origin
+            val pathFlow = tags[sinkIndex].flow
 
             s = sinkIndex
             while (s != sourceIndex) {

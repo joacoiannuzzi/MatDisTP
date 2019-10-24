@@ -78,17 +78,6 @@ class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
 
     operator fun get(v: Int, w: Int) = getEdge(v, w)
 
-    override fun getAdjacents(v: Int): MutableList<Int> {
-        if (v > order) {
-            throw IndexOutOfBoundsException()
-        }
-        val lst = mutableListOf<Int>()
-        for (w in 0 until order)
-            if (existsEdge(v, w))
-                lst.add(w)
-        return lst
-    }
-
     private fun lookForPath(source: Int, end: Int, tags: Array<Tag>): Boolean {
         val visited = BooleanArray(order)
         val queue = LinkedList<Int>()

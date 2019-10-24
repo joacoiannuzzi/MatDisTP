@@ -4,15 +4,15 @@ import java.util.*
 import kotlin.math.min
 
 class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
+
     data class Edge(var capacity: Int, var flow: Int = 0)
 
-    var order = 0
-
-    var alpha = 0
-    var vertexes: Array<T?> = arrayOfNulls<Any>(capacity) as Array<T?>
+    private var order = 0
+    private var alpha = 0
+    private var vertexes: Array<T?> = arrayOfNulls<Any>(capacity) as Array<T?>
         private set
 
-    var matrix = Array(capacity) { Array(capacity) { Edge(Int.MAX_VALUE) } }
+    private var matrix = Array(capacity) { Array(capacity) { Edge(Int.MAX_VALUE) } }
         private set
 
     constructor(vararg vertexes: T) : this(vertexes.size) { // 2º constructor
@@ -40,9 +40,8 @@ class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
     }
 
     override fun removeEdge(v: Int, w: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        matrix[v][w] = Edge(Int.MAX_VALUE)
     }
-
 
 
     operator fun set(v: Int, w: Int, capacity: Int) = addEdge(v, w, capacity)

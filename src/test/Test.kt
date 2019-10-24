@@ -24,12 +24,12 @@ class Test {
 
     @Test
     fun `The order should be 6`() {
-        assertEquals(6, t.order)
+        assertEquals(6, t.order())
     }
 
     @Test
     fun `The alpha should be 9`() {
-        assertEquals(9, t.alpha)
+        assertEquals(9, t.alpha())
     }
 
     @Test

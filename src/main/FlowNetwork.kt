@@ -11,16 +11,12 @@ class FlowNetwork<T>(capacity: Int = 10) {
         private set
     var alpha = 0
         private set
-    private var vertexes = arrayOfNulls<Any>(capacity) as Array<T?>
-    private var matrix = Array(capacity) { Array(capacity) { Edge(-1) } }
+    private var vertexes: Array<T?> = arrayOfNulls<Any>(capacity) as Array<T?>
+    private var matrix = Array(capacity) { Array(capacity) { Edge(Int.MAX_VALUE) } }
 
     constructor(vararg vertexes: T) : this(vertexes.size) { // 2º constructor
         this.vertexes = vertexes as Array<T?>
         this.order = vertexes.size
-    }
-
-    fun addVertex(v: T) {
-        vertexes[order++] = v
     }
 
     fun addEdge(v: T, w: T, capacity: Int) = addEdge(vertexes.indexOf(v), vertexes.indexOf(w), capacity)
@@ -36,7 +32,11 @@ class FlowNetwork<T>(capacity: Int = 10) {
 
     fun existsEdge(v: T, w: T) = existsEdge(vertexes.indexOf(v), vertexes.indexOf(w))
 
-    private fun existsEdge(v: Int, w: Int) = matrix[v][w].capacity > 0
+    private fun existsEdge(v: Int, w: Int) = matrix[v][w].capacity != Int.MAX_VALUE
+
+    fun notSaturated(v: Int, w: Int) = remainingFlow(v, w) > 0
+
+    fun remainingFlow(v: Int, w: Int) = matrix[v][w].capacity - matrix[v][w].flow
 
     fun getVertex(v: Int) = vertexes[v]
 
@@ -69,7 +69,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
             val u = queue.pop()
 
             for (vertex in 0 until order) {
-                if (!visited[vertex] && existsEdge(u, vertex)) {
+                if (!visited[vertex] && existsEdge(u, vertex) && notSaturated(u, vertex)) {
                     queue.push(vertex)
                     parent[vertex] = u
                     visited[vertex] = true
@@ -95,15 +95,14 @@ class FlowNetwork<T>(capacity: Int = 10) {
 
             while (s != sourceIndex) {
                 u = parent[s]
-                pathFlow = min(pathFlow, matrix[u][s].capacity)
+                pathFlow = min(pathFlow, remainingFlow(u, s))
                 s = parent[s]
             }
 
             s = sinkIndex
             while (s != sourceIndex) {
                 u = parent[s]
-                matrix[u][s].capacity -= pathFlow
-                matrix[s][u].capacity += pathFlow
+                matrix[u][s].flow += pathFlow
                 s = parent[s]
             }
             maxFlow += pathFlow
@@ -113,3 +112,4 @@ class FlowNetwork<T>(capacity: Int = 10) {
 
 
 }
+

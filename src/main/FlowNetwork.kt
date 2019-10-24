@@ -3,6 +3,30 @@ package main
 import java.util.*
 import kotlin.math.min
 
+/*  TODO
+
+a.	Especificar una red de transporte
+b.	Realizar y probar la implementación de una red de transporte
+c.	Para probar el buen funcionamiento de la clase anterior:
+    i.	Hacer un método que permita cargar la red (este método debe permita cargar los valores
+    de los nodos y las aristas).
+    ii.	Hacer un método que muestre por pantalla la red (puede ser un listado con los valores
+    de los nodos y otro con las aristas o bien el dibujo del grafo).
+d.	Implementar el algoritmo de Ford Fulkerson.
+
+
+ La entrega es el 12 de noviembre. Ese día se efectuará la defensa del trabajo.
+ Como este trabajo equivale al segundo parcial debe quedar la evidencia del mismo en la
+ facultad por lo tanto deben entregar impreso:
+•	caratula que incluya el nombre de la materia, cuatrimestre y año y los integrantes del grupo
+•	el enunciado
+•	la especificación del grafo
+•	análisis de la complejidad de cada método.
+•	las especificaciones de los algoritmos pedidos
+•	NO entregar los códigos
+
+ */
+
 class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
 
     data class Edge(var capacity: Int, var flow: Int = 0)
@@ -10,10 +34,7 @@ class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
     private var order = 0
     private var alpha = 0
     private var vertexes: Array<T?> = arrayOfNulls<Any>(capacity) as Array<T?>
-        private set
-
     private var matrix = Array(capacity) { Array(capacity) { Edge(Int.MAX_VALUE) } }
-        private set
 
     constructor(vararg vertexes: T) : this(vertexes.size) { // 2º constructor
         this.vertexes = vertexes as Array<T?>
@@ -43,7 +64,6 @@ class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
         matrix[v][w] = Edge(Int.MAX_VALUE)
     }
 
-
     operator fun set(v: Int, w: Int, capacity: Int) = addEdge(v, w, capacity)
 
     override fun existsEdge(v: Int, w: Int) = matrix[v][w].capacity != Int.MAX_VALUE
@@ -58,7 +78,7 @@ class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
 
     operator fun get(v: Int, w: Int) = getEdge(v, w)
 
-    override fun getAdj(v: Int): MutableList<Int> {
+    override fun getAdjacents(v: Int): MutableList<Int> {
         if (v > order) {
             throw IndexOutOfBoundsException()
         }
@@ -69,7 +89,7 @@ class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
         return lst
     }
 
-    private fun bfs(source: Int, end: Int, tags: Array<Tag>): Boolean {
+    private fun lookForPath(source: Int, end: Int, tags: Array<Tag>): Boolean {
         val visited = BooleanArray(order)
         val queue = LinkedList<Int>()
         queue.push(source)
@@ -97,7 +117,7 @@ class FlowNetwork<T>(capacity: Int = 10): FlowNetworkInterface<T> {
         val tags = Array(order) { Tag(-1, Int.MAX_VALUE) } // create array of length order with all values nil tags
         var maxFlow = 0
 
-        while (bfs(source, sink, tags)) {
+        while (lookForPath(source, sink, tags)) {
 
             val pathFlow = tags[sink].flow
 

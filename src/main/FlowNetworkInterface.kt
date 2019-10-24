@@ -22,7 +22,7 @@ interface FlowNetworkInterface<T> {
 
     fun calculateMaxFlow(source: Int, sink: Int): Int
 
-    fun getAdj(v: Int): MutableList<Int>
+    fun getAdjacents(v: Int): MutableList<Int>
 
     fun getVertex(v: Int): T?
 }

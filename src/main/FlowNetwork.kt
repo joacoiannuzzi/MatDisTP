@@ -59,7 +59,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
         return lst
     }
 
-    private fun bfs(source: Int, end: Int, parent: IntArray): Boolean {
+    private fun bfs(source: Int, end: Int, tags: Array<Tag>): Boolean {
         val visited = BooleanArray(order)
         val queue = LinkedList<Int>()
         queue.push(source)
@@ -71,7 +71,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
             for (vertex in 0 until order) {
                 if (!visited[vertex] && existsEdge(u, vertex) && notSaturated(u, vertex)) {
                     queue.push(vertex)
-                    parent[vertex] = u
+                    tags[vertex] = Tag(u, min(remainingFlow(u, vertex), tags[u].flow))
                     visited[vertex] = true
                 }
             }
@@ -79,31 +79,26 @@ class FlowNetwork<T>(capacity: Int = 10) {
         return visited[end]
     }
 
-    fun fordFulkerson(source: T, sink: T): Int {
+    private data class Tag(val parent: Int, var flow: Int)
+
+    fun calculateMaxFlow(source: T, sink: T): Int {
         val sourceIndex = vertexes.indexOf(source)
         val sinkIndex = vertexes.indexOf(sink)
 
         var s = 0
         var u = 0
-        val parent = IntArray(order) { -1 } // create array of length order with all values '-1'
+        val tags = Array(order) { Tag(-1, Int.MAX_VALUE) } // create array of length order with all values nil tags
         var maxFlow = 0
 
-        while (bfs(sourceIndex, sinkIndex, parent)) {
+        while (bfs(sourceIndex, sinkIndex, tags)) {
 
-            var pathFlow = Int.MAX_VALUE // capacity of origin
-            s = sinkIndex
-
-            while (s != sourceIndex) {
-                u = parent[s]
-                pathFlow = min(pathFlow, remainingFlow(u, s))
-                s = parent[s]
-            }
+            val pathFlow = tags[sinkIndex].flow // capacity of origin
 
             s = sinkIndex
             while (s != sourceIndex) {
-                u = parent[s]
+                u = tags[s].parent
                 matrix[u][s].flow += pathFlow
-                s = parent[s]
+                s = tags[s].parent
             }
             maxFlow += pathFlow
         }

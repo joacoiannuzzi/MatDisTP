@@ -31,7 +31,7 @@ class Test {
 
     @Test
     fun `The max flow should be 11`() {
-        val flow = t.fordFulkerson("a", "z")
+        val flow = t.calculateMaxFlow("a", "z")
         assertEquals(11, flow)
     }
 }

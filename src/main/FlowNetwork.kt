@@ -74,6 +74,13 @@ class FlowNetwork<T>(capacity: Int = 10) : FlowNetworkInterface<T> {
 
     operator fun get(v: Int, w: Int) = getEdge(v, w)
 
+    fun resetFlow() {
+        matrix.forEach {
+            it.forEach { edge ->
+                edge.flow = 0
+            }
+        }
+    }
     fun clear() {
         val capacity = vertexes.size
         order = 0

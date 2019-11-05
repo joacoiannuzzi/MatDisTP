@@ -4,13 +4,17 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
-import java.awt.geom.*
+import java.awt.geom.AffineTransform
+import java.awt.geom.Line2D
+import java.awt.geom.Path2D
+import java.awt.geom.Point2D
 import java.util.*
 import javax.swing.*
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+
 
 class GraphPanel : JComponent() {
 
@@ -23,6 +27,10 @@ class GraphPanel : JComponent() {
     private var selecting = false
     private var connecting = false
     private var selectedForConnect: Vertex? = null
+    private var choosingSource = false
+    private var choosingSink = false
+    private var source = -1
+    private var sink = -1
 
     private val flowNetwork = FlowNetwork<String>()
 
@@ -48,8 +56,8 @@ class GraphPanel : JComponent() {
         if (selecting) {
             g.color = darkGray
             g.drawRect(
-                    mouseRect.x, mouseRect.y,
-                    mouseRect.width, mouseRect.height
+                mouseRect.x, mouseRect.y,
+                mouseRect.width, mouseRect.height
             )
         }
     }
@@ -65,6 +73,31 @@ class GraphPanel : JComponent() {
         }
         connecting = false
         selectedForConnect = null
+        repaint()
+    }
+
+    fun chooseSource() {
+        getSelected()
+        val vertex = selected[0]
+        vertex.isSource = true
+        source = vertexes.indexOf(vertex)
+        choosingSource = false
+        choosingSink = true
+    }
+
+    fun chooseSink() {
+        getSelected()
+        val vertex = selected[0]
+        vertex.isSink = true
+        sink = vertexes.indexOf(vertex)
+        choosingSink = false
+        calculateMaxFlow()
+    }
+
+    private fun calculateMaxFlow() {
+        val maxFlow = flowNetwork.calculateMaxFlow(source, sink)
+        JOptionPane.showMessageDialog(null, "Max flow: $maxFlow")
+        selectNone()
         repaint()
     }
 
@@ -150,11 +183,9 @@ class GraphPanel : JComponent() {
         override fun mousePressed(e: MouseEvent) {
             mousePt = e.point
             when {
-                connecting -> {
-                    if (selectOne(mousePt)) {
-                        connect()
-                    }
-                }
+                connecting -> if (selectOne(mousePt)) connect()
+                choosingSource -> if (selectOne(mousePt)) chooseSource()
+                choosingSink -> if (selectOne(mousePt)) chooseSink()
                 e.isShiftDown -> selectToggle(mousePt)
                 selectOne(mousePt) -> selecting = false
                 else -> {
@@ -174,17 +205,17 @@ class GraphPanel : JComponent() {
             if (selecting) {
                 mouseRect.run {
                     setBounds(
-                            mousePt.x.coerceAtMost(e.x),
-                            mousePt.y.coerceAtMost(e.y),
-                            abs(mousePt.x - e.x),
-                            abs(mousePt.y - e.y)
+                        mousePt.x.coerceAtMost(e.x),
+                        mousePt.y.coerceAtMost(e.y),
+                        abs(mousePt.x - e.x),
+                        abs(mousePt.y - e.y)
                     )
                 }
                 selectRect()
             } else {
                 delta.setLocation(
-                        e.x - mousePt.x,
-                        e.y - mousePt.y
+                    e.x - mousePt.x,
+                    e.y - mousePt.y
                 )
                 updatePosition(delta)
                 mousePt = e.point
@@ -206,9 +237,9 @@ class GraphPanel : JComponent() {
             this.background = lightGray
 
             this.add(defaultButton)
-            this.add(JButton(clearAll))
-            this.add(JButton(calculateFlow))
             this.add(JButton(connectEdge))
+            this.add(JButton(calculateFlow))
+            this.add(JButton(clearAll))
 
         }
     }
@@ -218,15 +249,21 @@ class GraphPanel : JComponent() {
         override fun actionPerformed(e: ActionEvent) {
             if (vertexes.size < 2) {
                 JOptionPane.showMessageDialog(
-                        null,
-                        "No enough vertexes",
-                        "WARNING_MESSAGE",
-                        JOptionPane.WARNING_MESSAGE
+                    null,
+                    "No enough vertexes",
+                    "WARNING_MESSAGE",
+                    JOptionPane.WARNING_MESSAGE
                 )
             } else {
-                val maxFlow = flowNetwork.calculateMaxFlow(0, flowNetwork.order() - 1)
-                JOptionPane.showMessageDialog(null, "Max flow: $maxFlow")
-                repaint()
+                source = -1
+                sink = -1
+                vertexes.forEach {
+                    it.isSource = false
+                    it.isSink = false
+                }
+                flowNetwork.resetFlow()
+                choosingSource = true
+
             }
         }
     }
@@ -241,6 +278,7 @@ class GraphPanel : JComponent() {
             flowNetwork.addVertex(text)
             n.isSelected = true
             vertexes.add(n)
+            selectNone()
             repaint()
         }
     }
@@ -273,13 +311,13 @@ class GraphPanel : JComponent() {
      */
     private inner class Edge(private val n1: Vertex, private val n2: Vertex) {
 
+        var edge: FlowNetwork.Edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
+
         fun draw(g: Graphics) {
             val p1 = n1.location
             val p2 = n2.location
             g.color = darkGray
-            val edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
 
-            //Draw arrow
             val g2d = g as Graphics2D
             val from = angleBetween(p1, p2)
             val to = angleBetween(p2, p1)
@@ -294,11 +332,12 @@ class GraphPanel : JComponent() {
 
             val line = Line2D.Double(pointFrom, pointTo)
             g2d.draw(line)
+
             g2d.color = MAGENTA
             val arrowHead = ArrowHead()
             val at = AffineTransform.getTranslateInstance(
-                    pointTo.x - arrowHead.bounds2D.width / 2.0,
-                    pointTo.y
+                pointTo.x - arrowHead.bounds2D.width / 2.0,
+                pointTo.y
             )
             at.rotate(from, arrowHead.bounds2D.centerX, 0.0)
             arrowHead.transform(at)
@@ -369,6 +408,8 @@ class GraphPanel : JComponent() {
     private inner class Vertex(val location: Point, private var text: String) {
         /**
          * Return true if this node is selected.
+         */
+        /**
          * Mark this node as selected.
          */
         var isSelected = false
@@ -394,7 +435,7 @@ class GraphPanel : JComponent() {
             when {
                 isSelected -> g.color = black
                 isSource -> g.color = blue
-                isSink -> g.color = green
+                isSink -> g.color = cyan
                 else -> g.color = red
             }
             g.drawOval(b.x, b.y, b.width, b.height)

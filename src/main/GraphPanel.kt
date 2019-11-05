@@ -281,6 +281,8 @@ class GraphPanel : JComponent() {
             val edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
             g.drawString("" + edge.capacity + ", " + edge.flow, p1.x / 2, p1.x * 2)
             drawArrow(g, p1, p2)
+
+
         }
 
         private fun drawArrow(g: Graphics, circle1: Point2D, circle2: Point2D) {

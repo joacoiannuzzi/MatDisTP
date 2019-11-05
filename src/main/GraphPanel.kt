@@ -62,7 +62,7 @@ class GraphPanel : JComponent() {
         }
     }
 
-    fun connect() {
+    private fun connect() {
         getSelected()
         val node1 = selectedForConnect!!
         val node2 = selected[0]
@@ -76,7 +76,7 @@ class GraphPanel : JComponent() {
         repaint()
     }
 
-    fun chooseSource() {
+    private fun chooseSource() {
         getSelected()
         val vertex = selected[0]
         vertex.isSource = true
@@ -85,7 +85,7 @@ class GraphPanel : JComponent() {
         choosingSink = true
     }
 
-    fun chooseSink() {
+    private fun chooseSink() {
         getSelected()
         val vertex = selected[0]
         vertex.isSink = true

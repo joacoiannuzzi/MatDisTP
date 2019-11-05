@@ -207,9 +207,10 @@ class GraphPanel : JComponent() {
             this.background = lightGray
 
             this.add(defaultButton)
-            this.add(JButton(connectEdge))
-            this.add(JButton(calculateFlow))
             this.add(JButton(clearAll))
+            this.add(JButton(calculateFlow))
+            this.add(JButton(connectEdge))
+
         }
     }
 
@@ -280,7 +281,6 @@ class GraphPanel : JComponent() {
             val edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
             g.drawString("" + edge.capacity + ", " + edge.flow, p1.x / 2, p1.x * 2)
             drawArrow(g, p1, p2)
-
         }
 
         private fun drawArrow(g: Graphics, circle1: Point2D, circle2: Point2D) {
@@ -289,13 +289,12 @@ class GraphPanel : JComponent() {
             val from = angleBetween(circle1, circle2)
             val to = angleBetween(circle2, circle1)
 
-
-            val pointFrom = getPointOnCircle(circle1, from, RADIUS.toDouble())
-            val pointTo = getPointOnCircle(circle2, to, RADIUS.toDouble())
+            val pointFrom = getPointOnCircle(circle1, from)
+            val pointTo = getPointOnCircle(circle2, to)
 
             val line = Line2D.Double(pointFrom, pointTo)
             g2d.draw(line)
-            g2d.color = Color.MAGENTA
+            g2d.color = MAGENTA
             val arrowHead = ArrowHead()
             val at = AffineTransform.getTranslateInstance(
                 pointTo.x - arrowHead.bounds2D.width / 2.0,
@@ -339,15 +338,15 @@ class GraphPanel : JComponent() {
             return rotation
         }
 
-        private fun getPointOnCircle(center: Point2D, radians: Double, radius: Double): Point2D {
-            var radians = radians
+        private fun getPointOnCircle(center: Point2D, angle: Double): Point2D {
+            var radians = angle
 
             val x = center.x
             val y = center.y
             radians -= Math.toRadians(90.0) // 0 becomes th?e top
             // Calculate the outter point of the line
-            val xPosy = (x + cos(radians) * radius).toFloat().toDouble()
-            val yPosy = (y + sin(radians) * radius).toFloat().toDouble()
+            val xPosy = (x + cos(radians) * RADIUS).toFloat().toDouble()
+            val yPosy = (y + sin(radians) * RADIUS).toFloat().toDouble()
 
             return Point2D.Double(xPosy, yPosy)
 

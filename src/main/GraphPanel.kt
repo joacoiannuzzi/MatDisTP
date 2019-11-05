@@ -15,6 +15,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
+
 class GraphPanel : JComponent() {
 
     private val control = ControlPanel()
@@ -434,11 +435,20 @@ class GraphPanel : JComponent() {
             when {
                 isSelected -> g.color = black
                 isSource -> g.color = blue
-                isSink -> g.color = cyan
+                isSink -> g.color = lightGray
                 else -> g.color = red
             }
             g.drawOval(b.x, b.y, b.width, b.height)
-            g.drawString(text, b.x + b.width / 2 - text.length, b.y + b.height / 2)
+            var fm = g.fontMetrics
+            var textWidth = fm.getStringBounds(text, g).width
+            while (textWidth > RADIUS * 2 - 2) {
+                g.font = Font(g.font.fontName, g.font.style, g.font.size - 1)
+                fm = g.fontMetrics
+                textWidth = fm.getStringBounds(text, g).width
+            }
+            val xText = b.x + b.width / 2.0 - textWidth / 2.0
+            val yText = b.y + b.height / 2.0 + fm.maxAscent / 2.0
+            g.drawString(text, xText.toInt(), yText.toInt())
         }
 
         /**

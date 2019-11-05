@@ -1,20 +1,10 @@
 import java.awt.*
 import java.awt.Color.*
-import java.awt.event.ActionEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
-import java.awt.event.MouseMotionAdapter
-import java.awt.geom.AffineTransform
-import java.awt.geom.Line2D
-import java.awt.geom.Path2D
-import java.awt.geom.Point2D
+import java.awt.event.*
+import java.awt.geom.*
 import java.util.*
 import javax.swing.*
-import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
-
+import kotlin.math.*
 
 class GraphPanel : JComponent() {
 

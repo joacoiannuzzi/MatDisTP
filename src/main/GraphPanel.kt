@@ -6,13 +6,13 @@ import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionAdapter
+import java.awt.geom.*
 import java.util.*
 import javax.swing.*
 import kotlin.math.abs
-import javax.swing.JOptionPane
-import java.awt.Graphics
-import java.awt.AWTEventMulticaster.getListeners
-import kotlin.math.sqrt
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 class GraphPanel : JComponent() {
@@ -49,8 +49,8 @@ class GraphPanel : JComponent() {
         if (selecting) {
             g.color = darkGray
             g.drawRect(
-                    mouseRect.x, mouseRect.y,
-                    mouseRect.width, mouseRect.height
+                mouseRect.x, mouseRect.y,
+                mouseRect.width, mouseRect.height
             )
         }
     }
@@ -69,11 +69,11 @@ class GraphPanel : JComponent() {
         override fun mousePressed(e: MouseEvent) {
             mousePt = e.point
             when {
-                e.isShiftDown -> Node.selectToggle(nodes, mousePt)
-                e.isPopupTrigger -> {
-                    Node.selectOne(nodes, mousePt)
-                    showPopup(e)
-                }
+                //e.isShiftDown -> Node.selectToggle(nodes, mousePt)
+//                e.isPopupTrigger -> {
+//                    Node.selectOne(nodes, mousePt)
+//                    showPopup(e)
+//                }
                 Node.selectOne(nodes, mousePt) -> selecting = false
                 else -> {
                     Node.selectNone(nodes)
@@ -96,17 +96,17 @@ class GraphPanel : JComponent() {
             if (selecting) {
                 mouseRect.run {
                     setBounds(
-                            mousePt.x.coerceAtMost(e.x),
-                            mousePt.y.coerceAtMost(e.y),
-                            abs(mousePt.x - e.x),
-                            abs(mousePt.y - e.y)
+                        mousePt.x.coerceAtMost(e.x),
+                        mousePt.y.coerceAtMost(e.y),
+                        abs(mousePt.x - e.x),
+                        abs(mousePt.y - e.y)
                     )
                 }
                 Node.selectRect(nodes, mouseRect)
             } else {
                 delta.setLocation(
-                        e.x - mousePt.x,
-                        e.y - mousePt.y
+                    e.x - mousePt.x,
+                    e.y - mousePt.y
                 )
                 Node.updatePosition(nodes, delta)
                 mousePt = e.point
@@ -117,10 +117,12 @@ class GraphPanel : JComponent() {
 
     private inner class ControlPanel internal constructor() : JToolBar() {
 
-        private val newNode = NewNodeAction("New")
-        private val clearAll = ClearAction("Clear")
+        private val newNode = NewVertexAction("NewVertex")
         private val connect = ConnectAction("Connect")
+        private val connectEdge = ConnectEdgeAction("ConnectEdge")
+        private val clearAll = ClearAction("Clear")
         private val delete = DeleteAction("Delete")
+        private val calculateFlow = CalculateFlowAction("CalculateFlow")
         val defaultButton = JButton(newNode)
         val popup = JPopupMenu()
 
@@ -130,13 +132,8 @@ class GraphPanel : JComponent() {
 
             this.add(defaultButton)
             this.add(JButton(clearAll))
-            val js = JSpinner()
-            js.model = SpinnerNumberModel(RADIUS, 5, 100, 5)
-//            js.addChangeListener { e ->
-//                val s = e.source as JSpinner
-//                radius = s.value as Int
-//                this@main.GraphPanel.repaint()
-//            }
+            this.add(JButton(calculateFlow))
+            this.add(JButton(connectEdge))
 
             popup.add(JMenuItem(newNode))
             popup.add(JMenuItem(connect))
@@ -144,7 +141,25 @@ class GraphPanel : JComponent() {
         }
     }
 
-    private inner class NewNodeAction(name: String) : AbstractAction(name) {
+    private inner class CalculateFlowAction(name: String) : AbstractAction(name) {
+
+        override fun actionPerformed(e: ActionEvent) {
+            if (nodes.size < 2) {
+                JOptionPane.showMessageDialog(
+                    null,
+                    "No enough vertexes",
+                    "WARNING_MESSAGE",
+                    JOptionPane.WARNING_MESSAGE
+                );
+            }
+            val maxFlow = flow.calculateMaxFlow(0, flow.order() - 1)
+            JOptionPane.showMessageDialog(null, "Max flow: " + maxFlow);
+            repaint()
+        }
+    }
+
+
+    private inner class NewVertexAction(name: String) : AbstractAction(name) {
 
         override fun actionPerformed(e: ActionEvent) {
             Node.selectNone(nodes)
@@ -167,6 +182,20 @@ class GraphPanel : JComponent() {
         }
     }
 
+    private inner class ConnectEdgeAction(name: String) : AbstractAction(name) {
+
+        override fun actionPerformed(e: ActionEvent) {
+            Node.getSelected(nodes, selected)
+            val node1: Node
+            val node2: Node
+            if (selected.size == 1) {
+                node1 = selected[1]
+            }
+
+
+        }
+    }
+
     private inner class ConnectAction(name: String) : AbstractAction(name) {
 
         override fun actionPerformed(e: ActionEvent) {
@@ -175,8 +204,9 @@ class GraphPanel : JComponent() {
                 for (i in 0 until selected.size - 1) {
                     val n1 = selected[i]
                     val n2 = selected[i + 1]
+                    val capacity = JOptionPane.showInputDialog("Enter capacity:").toInt()
                     edges.add(Edge(n1, n2))
-                    flow[i, i + 1] = 3
+                    flow[i, i + 1] = capacity
                 }
             }
             repaint()
@@ -208,20 +238,43 @@ class GraphPanel : JComponent() {
         }
     }
 
+
     /**
      * An Edge is a pair of Nodes.
      */
-    private class Edge(val n1: Node, val n2: Node) {
+    private open class Edge(val n1: Node, val n2: Node) {
 
         fun draw(g: Graphics) {
             val p1 = n1.location
             val p2 = n2.location
             g.color = darkGray
             g.drawString("", p1.x / 2, p1.x * 2)
-//            g.drawLine(p1.x, p1.y, p2.x, p2.y)
-            drawArrowLine(g, p1.x, p1.y, p2.x, p2.y)
+            drawArrow(g, p1, p2)
+
         }
 
+        private fun drawArrow(g: Graphics, circle1: Point2D, circle2: Point2D) {
+
+            val g2d = g as Graphics2D
+            val from = angleBetween(circle1, circle2)
+            val to = angleBetween(circle2, circle1)
+
+
+            val pointFrom = getPointOnCircle(circle1, from, RADIUS.toDouble())
+            val pointTo = getPointOnCircle(circle2, to, RADIUS.toDouble())
+
+            val line = Line2D.Double(pointFrom, pointTo)
+            g2d.draw(line)
+            g2d.color = Color.MAGENTA
+            val arrowHead = ArrowHead()
+            val at = AffineTransform.getTranslateInstance(
+                pointTo.x - arrowHead.bounds2D.width / 2.0,
+                pointTo.y
+            )
+            at.rotate(from, arrowHead.bounds2D.centerX, 0.0)
+            arrowHead.transform(at)
+            g2d.draw(arrowHead)
+        }
 
         /**
          * Draw an arrow line between two points.
@@ -234,31 +287,54 @@ class GraphPanel : JComponent() {
          * @param h  the height of the arrow.
          */
 
-        private fun drawArrowLine(g: Graphics, x1: Int, y1: Int, x2: Int, y2: Int, d: Int = 6, h: Int = 10) {
-            val dx = x2 - x1
-            val dy = y2 - y1
-            val D = sqrt((dx * dx + dy * dy).toDouble())
-            var xm = D - d
-            var xn = xm
-            var ym = h.toDouble()
-            var yn = (-h).toDouble()
-            var x: Double
-            val sin = dy / D
-            val cos = dx / D
+        private fun angleBetween(from: Point2D, to: Point2D): Double {
+            val x = from.x
+            val y = from.y
 
-            x = xm * cos - ym * sin + x1
-            ym = xm * sin + ym * cos + y1.toDouble()
-            xm = x
+            // This is the difference between the anchor point
+            // and the mouse.  Its important that this is done
+            // within the local coordinate space of the component,
+            // this means either the MouseMotionListener needs to
+            // be registered to the component itself (preferably)
+            // or the mouse coordinates need to be converted into
+            // local coordinate space
+            val deltaX = to.x - x
+            val deltaY = to.y - y
 
-            x = xn * cos - yn * sin + x1
-            yn = xn * sin + yn * cos + y1.toDouble()
-            xn = x
+            // Calculate the angle...
+            // This is our "0" or start angle..
+            var rotation = -atan2(deltaX, deltaY)
+            rotation = Math.toRadians(Math.toDegrees(rotation) + 180)
 
-            val xpoints = intArrayOf(x2, xm.toInt(), xn.toInt())
-            val ypoints = intArrayOf(y2, ym.toInt(), yn.toInt())
+            return rotation
+        }
 
-            g.drawLine(x1, y1, x2, y2)
-            g.fillPolygon(xpoints, ypoints, 3)
+        protected fun center(bounds: Rectangle2D): Point2D {
+            return Point2D.Double(bounds.centerX, bounds.centerY)
+        }
+
+        protected fun getPointOnCircle(center: Point2D, radians: Double, radius: Double): Point2D {
+            var radians = radians
+
+            val x = center.x
+            val y = center.y
+            radians -= Math.toRadians(90.0) // 0 becomes th?e top
+            // Calculate the outter point of the line
+            val xPosy = (x + cos(radians) * radius).toFloat().toDouble()
+            val yPosy = (y + sin(radians) * radius).toFloat().toDouble()
+
+            return Point2D.Double(xPosy, yPosy)
+
+        }
+
+        inner class ArrowHead : Path2D.Double() {
+            init {
+                val size = 10
+                moveTo(0.0, size.toDouble())
+                lineTo((size / 2).toDouble(), 0.0)
+                lineTo(size.toDouble(), size.toDouble())
+            }
+
         }
     }
 
@@ -269,11 +345,11 @@ class GraphPanel : JComponent() {
     /**
      * Construct a new node.
      */(
-            /**
-             * Return this node's location.
-             */
-            val location: Point,
-            var text: String
+        /**
+         * Return this node's location.
+         */
+        val location: Point,
+        var text: String
     ) {
         /**
          * Return true if this node is selected.
@@ -283,17 +359,16 @@ class GraphPanel : JComponent() {
          */
         var isSelected = false
         private val b = Rectangle()
-        private val r = 40
 
         init {
             setBoundary(b)
         }
-        
+
         /**
          * Calculate this node's rectangular boundary.
          */
         private fun setBoundary(b: Rectangle) {
-            b.setBounds(location.x - r, location.y - r, 2 * r, 2 * r)
+            b.setBounds(location.x - RADIUS, location.y - RADIUS, 2 * RADIUS, 2 * RADIUS)
         }
 
         /**
@@ -315,7 +390,7 @@ class GraphPanel : JComponent() {
          * Return true if this node contains p.
          */
         operator fun contains(p: Point): Boolean {
-            return b.contains(p)
+            return p in b
         }
 
         companion object {
@@ -346,7 +421,7 @@ class GraphPanel : JComponent() {
              */
             fun selectOne(list: List<Node>, p: Point): Boolean {
                 for (n in list) {
-                    if (n.contains(p)) {
+                    if (p in n) {
                         if (!n.isSelected) {
                             selectNone(list)
                             n.isSelected = true
@@ -371,7 +446,7 @@ class GraphPanel : JComponent() {
              */
             fun selectToggle(list: List<Node>, p: Point) {
                 for (n in list) {
-                    if (n.contains(p)) {
+                    if (p in n) {
                         n.isSelected = !n.isSelected
                     }
                 }
@@ -396,7 +471,7 @@ class GraphPanel : JComponent() {
 
         private const val WIDE = 640
         private const val HIGH = 480
-        private const val RADIUS = 35
+        private const val RADIUS = 40
 
         @JvmStatic
         fun main(args: Array<String>) {

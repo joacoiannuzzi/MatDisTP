@@ -64,7 +64,10 @@ class FlowNetwork<T>(capacity: Int = 10) : FlowNetworkInterface<T> {
     }
 
     override fun removeVertex(v: Int) {
-        //TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        vertexes[v] = null
+        for(w in 0 until order){
+            matrix[v][w] = Edge(0, 0)
+        }
     }
 
     override fun removeEdge(v: Int, w: Int) {
@@ -107,6 +110,10 @@ class FlowNetwork<T>(capacity: Int = 10) : FlowNetworkInterface<T> {
 
     private data class Tag(val parent: Int, val flow: Int)
 
+
+    /**
+    *@param source index of vertex from where to start the calculations
+    */
     override fun calculateMaxFlow(source: Int, sink: Int): Int {
         // create array of length order with all values nil tags
         val tags = Array(order) { Tag(-1, inf) }

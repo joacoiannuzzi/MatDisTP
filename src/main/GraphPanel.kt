@@ -1,5 +1,4 @@
-package main
-
+import main.FlowNetwork
 import java.awt.*
 import java.awt.Color.*
 import java.awt.event.ActionEvent
@@ -18,16 +17,16 @@ import kotlin.math.sin
 class GraphPanel : JComponent() {
 
     private val control = ControlPanel()
-    private val nodes = ArrayList<Node>()
-    private val selected = ArrayList<Node>()
+    private val vertexes = ArrayList<Vertex>()
+    private val selected = ArrayList<Vertex>()
     private val edges = ArrayList<Edge>()
     private var mousePt = Point(WIDE / 2, HIGH / 2)
     private val mouseRect = Rectangle()
     private var selecting = false
     private var connecting = false
-    private var selectedForConnect: Node? = null
+    private var selectedForConnect: Vertex? = null
 
-    val flow = FlowNetwork<String>()
+    private val flowNetwork = FlowNetwork<String>()
 
     init {
         this.isOpaque = true
@@ -45,7 +44,7 @@ class GraphPanel : JComponent() {
         for (e in edges) {
             e.draw(g)
         }
-        for (n in nodes) {
+        for (n in vertexes) {
             n.draw(g)
         }
         if (selecting) {
@@ -58,13 +57,13 @@ class GraphPanel : JComponent() {
     }
 
     fun connect() {
-        getSelected(nodes, selected)
+        getSelected()
         val node1 = selectedForConnect!!
         val node2 = selected[0]
         if (node1 != node2) {
             val capacity = JOptionPane.showInputDialog("Enter capacity:").toInt()
             edges.add(Edge(node1, node2))
-            flow[nodes.indexOf(node1), nodes.indexOf(node2)] = capacity
+            flowNetwork[vertexes.indexOf(node1), vertexes.indexOf(node2)] = capacity
         }
         connecting = false
         selectedForConnect = null
@@ -72,11 +71,11 @@ class GraphPanel : JComponent() {
     }
 
     /**
-     * Collected all the selected nodes in list.
+     * Collected all the selected nodes in vertexes.
      */
-    fun getSelected(list: List<Node>, selected: MutableList<Node>) {
+    fun getSelected() {
         selected.clear()
-        for (n in list) {
+        for (n in vertexes) {
             if (n.isSelected) {
                 selected.add(n)
             }
@@ -86,8 +85,8 @@ class GraphPanel : JComponent() {
     /**
      * Select no nodes.
      */
-    fun selectNone(list: List<Node>) {
-        for (n in list) {
+    fun selectNone() {
+        for (n in vertexes) {
             n.isSelected = false
         }
     }
@@ -95,11 +94,11 @@ class GraphPanel : JComponent() {
     /**
      * Select a single node; return true if not already selected.
      */
-    fun selectOne(list: List<Node>, point: Point): Boolean {
-        for (node in list) {
+    fun selectOne(point: Point): Boolean {
+        for (node in vertexes) {
             if (point in node) {
                 if (!node.isSelected) {
-                    selectNone(list)
+                    selectNone()
                     node.isSelected = true
                 }
                 return true
@@ -109,19 +108,19 @@ class GraphPanel : JComponent() {
     }
 
     /**
-     * Select each node in r.
+     * Select each node in mouseRect.
      */
-    fun selectRect(list: List<Node>, r: Rectangle) {
-        for (n in list) {
-            n.isSelected = r.contains(n.location)
+    fun selectRect() {
+        for (n in vertexes) {
+            n.isSelected = mouseRect.contains(n.location)
         }
     }
 
     /**
      * Toggle selected state of each node containing p.
      */
-    fun selectToggle(list: List<Node>, p: Point) {
-        for (n in list) {
+    fun selectToggle(p: Point) {
+        for (n in vertexes) {
             if (p in n) {
                 n.isSelected = !n.isSelected
             }
@@ -131,8 +130,8 @@ class GraphPanel : JComponent() {
     /**
      * Update each node's position by d (delta).
      */
-    fun updatePosition(list: List<Node>, d: Point) {
-        for (n in list) {
+    fun updatePosition(d: Point) {
+        for (n in vertexes) {
             if (n.isSelected) {
                 n.location.x += d.x
                 n.location.y += d.y
@@ -156,18 +155,18 @@ class GraphPanel : JComponent() {
             mousePt = e.point
             when {
                 connecting -> {
-                    if (selectOne(nodes, mousePt)) {
+                    if (selectOne(mousePt)) {
                         connect()
                     }
                 }
-                e.isShiftDown -> selectToggle(nodes, mousePt)
+                e.isShiftDown -> selectToggle(mousePt)
                 e.isPopupTrigger -> {
-                    selectOne(nodes, mousePt)
+                    selectOne(mousePt)
                     showPopup(e)
                 }
-                selectOne(nodes, mousePt) -> selecting = false
+                selectOne(mousePt) -> selecting = false
                 else -> {
-                    selectNone(nodes)
+                    selectNone()
                     selecting = true
                 }
             }
@@ -193,13 +192,13 @@ class GraphPanel : JComponent() {
                         abs(mousePt.y - e.y)
                     )
                 }
-                selectRect(nodes, mouseRect)
+                selectRect()
             } else {
                 delta.setLocation(
                     e.x - mousePt.x,
                     e.y - mousePt.y
                 )
-                updatePosition(nodes, delta)
+                updatePosition(delta)
                 mousePt = e.point
             }
             e.component.repaint()
@@ -209,7 +208,6 @@ class GraphPanel : JComponent() {
     private inner class ControlPanel internal constructor() : JToolBar() {
 
         private val newNode = NewVertexAction("Add Vertex")
-        private val connect = ConnectAction("Connect")
         private val connectEdge = ConnectEdgeAction("Add Edge")
         private val clearAll = ClearAction("Clear")
         private val delete = DeleteAction("Delete")
@@ -227,7 +225,6 @@ class GraphPanel : JComponent() {
             this.add(JButton(connectEdge))
 
             popup.add(JMenuItem(newNode))
-            popup.add(JMenuItem(connect))
             popup.add(JMenuItem(delete))
         }
     }
@@ -235,16 +232,16 @@ class GraphPanel : JComponent() {
     private inner class CalculateFlowAction(name: String) : AbstractAction(name) {
 
         override fun actionPerformed(e: ActionEvent) {
-            if (nodes.size < 2) {
+            if (vertexes.size < 2) {
                 JOptionPane.showMessageDialog(
                     null,
                     "No enough vertexes",
                     "WARNING_MESSAGE",
                     JOptionPane.WARNING_MESSAGE
-                );
+                )
             } else {
-                val maxFlow = flow.calculateMaxFlow(0, flow.order() - 1)
-                JOptionPane.showMessageDialog(null, "Max flow: $maxFlow");
+                val maxFlow = flowNetwork.calculateMaxFlow(0, flowNetwork.order() - 1)
+                JOptionPane.showMessageDialog(null, "Max flow: $maxFlow")
                 repaint()
             }
         }
@@ -253,13 +250,13 @@ class GraphPanel : JComponent() {
     private inner class NewVertexAction(name: String) : AbstractAction(name) {
 
         override fun actionPerformed(e: ActionEvent) {
-            selectNone(nodes)
+            selectNone()
             val p = mousePt.location
             val text = JOptionPane.showInputDialog("Enter text:")
-            val n = Node(p, text) // create node
-            flow.addVertex(text)
+            val n = Vertex(p, text) // create node
+            flowNetwork.addVertex(text)
             n.isSelected = true
-            nodes.add(n)
+            vertexes.add(n)
             repaint()
         }
     }
@@ -267,7 +264,7 @@ class GraphPanel : JComponent() {
     private inner class ClearAction(name: String) : AbstractAction(name) {
 
         override fun actionPerformed(e: ActionEvent) {
-            nodes.clear()
+            vertexes.clear()
             edges.clear()
             repaint()
         }
@@ -276,7 +273,7 @@ class GraphPanel : JComponent() {
     private inner class ConnectEdgeAction(name: String) : AbstractAction(name) {
 
         override fun actionPerformed(e: ActionEvent) {
-            getSelected(nodes, selected)
+            getSelected()
 
             if (selected.size == 1) {
                 selectedForConnect = selected[0]
@@ -286,27 +283,10 @@ class GraphPanel : JComponent() {
         }
     }
 
-    private inner class ConnectAction(name: String) : AbstractAction(name) {
-
-        override fun actionPerformed(e: ActionEvent) {
-            getSelected(nodes, selected)
-            if (selected.size > 1) {
-                for (i in 0 until selected.size - 1) {
-                    val n1 = selected[i]
-                    val n2 = selected[i + 1]
-                    val capacity = JOptionPane.showInputDialog("Enter capacity:").toInt()
-                    edges.add(Edge(n1, n2))
-                    flow[i, i + 1] = capacity
-                }
-            }
-            repaint()
-        }
-    }
-
     private inner class DeleteAction(name: String) : AbstractAction(name) {
 
         override fun actionPerformed(e: ActionEvent) {
-            val iter = nodes.listIterator()
+            val iter = vertexes.listIterator()
             while (iter.hasNext()) {
                 val n = iter.next()
                 if (n.isSelected) {
@@ -317,7 +297,7 @@ class GraphPanel : JComponent() {
             repaint()
         }
 
-        private fun deleteEdges(n: Node) {
+        private fun deleteEdges(n: Vertex) {
             val iter = edges.listIterator()
             while (iter.hasNext()) {
                 val e = iter.next()
@@ -332,14 +312,14 @@ class GraphPanel : JComponent() {
     /**
      * An Edge is a pair of Nodes.
      */
-    private class Edge(val n1: Node, val n2: Node) {
+    inner class Edge(val n1: Vertex, val n2: Vertex) {
 
         fun draw(g: Graphics) {
             val p1 = n1.location
             val p2 = n2.location
             g.color = darkGray
-//            val capacity = f
-            g.drawString("", p1.x / 2, p1.x * 2)
+            val edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
+            g.drawString("" + edge.capacity + ", " + edge.flow, p1.x / 2, p1.x * 2)
             drawArrow(g, p1, p2)
 
         }
@@ -400,11 +380,11 @@ class GraphPanel : JComponent() {
             return rotation
         }
 
-        protected fun center(bounds: Rectangle2D): Point2D {
+        fun center(bounds: Rectangle2D): Point2D {
             return Point2D.Double(bounds.centerX, bounds.centerY)
         }
 
-        protected fun getPointOnCircle(center: Point2D, radians: Double, radius: Double): Point2D {
+        fun getPointOnCircle(center: Point2D, radians: Double, radius: Double): Point2D {
             var radians = radians
 
             val x = center.x
@@ -432,7 +412,7 @@ class GraphPanel : JComponent() {
     /**
      * A Node represents a node in a graph.
      */
-    class Node(val location: Point, private var text: String) {
+    class Vertex(val location: Point, private var text: String) {
         /**
          * Return true if this node is selected.
          */
@@ -486,7 +466,7 @@ class GraphPanel : JComponent() {
         @JvmStatic
         fun main(args: Array<String>) {
             EventQueue.invokeLater {
-                val f = JFrame("main.GraphPanel")
+                val f = JFrame("GraphPanel")
                 f.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
                 val gp = GraphPanel()
                 f.add(gp.control, BorderLayout.NORTH)

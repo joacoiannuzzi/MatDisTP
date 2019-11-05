@@ -1,5 +1,3 @@
-package main
-
 interface FlowNetworkInterface<T> {
 
     fun order(): Int

@@ -8,10 +8,6 @@ interface FlowNetworkInterface<T> {
 
     fun addEdge(v: Int, w: Int, capacity: Int)
 
-    fun removeVertex(v: Int)
-
-    fun removeEdge(v: Int, w: Int)
-
     fun existsEdge(v: Int, w: Int): Boolean
 
     fun notSaturated(v: Int, w: Int): Boolean

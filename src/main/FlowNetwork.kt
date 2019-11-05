@@ -1,12 +1,9 @@
-package main
-
 /**
  * @Authors: Adaro Maximilano
  *           Biale Brian
  *           Iannuzzi Joaquin
  */
 
-import FlowNetworkInterface
 import java.util.*
 import kotlin.math.min
 
@@ -63,17 +60,6 @@ class FlowNetwork<T>(capacity: Int = 10) : FlowNetworkInterface<T> {
         }
     }
 
-    override fun removeVertex(v: Int) {
-        vertexes[v] = null
-        for(w in 0 until order){
-            matrix[v][w] = Edge(0, 0)
-        }
-    }
-
-    override fun removeEdge(v: Int, w: Int) {
-        matrix[v][w] = Edge(inf)
-    }
-
     operator fun set(v: Int, w: Int, capacity: Int) = addEdge(v, w, capacity)
 
     override fun existsEdge(v: Int, w: Int) = matrix[v][w].capacity != inf
@@ -87,6 +73,14 @@ class FlowNetwork<T>(capacity: Int = 10) : FlowNetworkInterface<T> {
     fun getEdge(v: Int, w: Int) = matrix[v][w]
 
     operator fun get(v: Int, w: Int) = getEdge(v, w)
+
+    fun clear() {
+        val capacity = vertexes.size
+        order = 0
+        alpha = 0
+        vertexes = arrayOfNulls<Any>(capacity) as Array<T?>
+        matrix = Array(capacity) { Array(capacity) { Edge(inf) } }
+    }
 
     private fun lookForPath(source: Int, end: Int, tags: Array<Tag>): Boolean {
         val visited = BooleanArray(order)
@@ -112,8 +106,8 @@ class FlowNetwork<T>(capacity: Int = 10) : FlowNetworkInterface<T> {
 
 
     /**
-    *@param source index of vertex from where to start the calculations
-    */
+     *@param source index of vertex from where to start the calculations
+     */
     override fun calculateMaxFlow(source: Int, sink: Int): Int {
         // create array of length order with all values nil tags
         val tags = Array(order) { Tag(-1, inf) }

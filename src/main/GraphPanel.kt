@@ -1,4 +1,3 @@
-import main.FlowNetwork
 import java.awt.*
 import java.awt.Color.*
 import java.awt.event.ActionEvent
@@ -145,9 +144,7 @@ class GraphPanel : JComponent() {
         override fun mouseReleased(e: MouseEvent) {
             selecting = false
             mouseRect.setBounds(0, 0, 0, 0)
-            if (e.isPopupTrigger) {
-                showPopup(e)
-            }
+            e.component.repaint()
             e.component.repaint()
         }
 
@@ -160,10 +157,6 @@ class GraphPanel : JComponent() {
                     }
                 }
                 e.isShiftDown -> selectToggle(mousePt)
-                e.isPopupTrigger -> {
-                    selectOne(mousePt)
-                    showPopup(e)
-                }
                 selectOne(mousePt) -> selecting = false
                 else -> {
                     selectNone()
@@ -171,10 +164,6 @@ class GraphPanel : JComponent() {
                 }
             }
             e.component.repaint()
-        }
-
-        private fun showPopup(e: MouseEvent) {
-            control.popup.show(e.component, e.x, e.y)
         }
     }
 
@@ -210,22 +199,17 @@ class GraphPanel : JComponent() {
         private val newNode = NewVertexAction("Add Vertex")
         private val connectEdge = ConnectEdgeAction("Add Edge")
         private val clearAll = ClearAction("Clear")
-        private val delete = DeleteAction("Delete")
         private val calculateFlow = CalculateFlowAction("Calculate Flow")
         val defaultButton = JButton(newNode)
-        val popup = JPopupMenu()
 
         init {
             this.layout = FlowLayout(FlowLayout.LEFT)
             this.background = lightGray
 
             this.add(defaultButton)
-            this.add(JButton(clearAll))
-            this.add(JButton(calculateFlow))
             this.add(JButton(connectEdge))
-
-            popup.add(JMenuItem(newNode))
-            popup.add(JMenuItem(delete))
+            this.add(JButton(calculateFlow))
+            this.add(JButton(clearAll))
         }
     }
 
@@ -266,6 +250,7 @@ class GraphPanel : JComponent() {
         override fun actionPerformed(e: ActionEvent) {
             vertexes.clear()
             edges.clear()
+            flowNetwork.clear()
             repaint()
         }
     }
@@ -283,36 +268,10 @@ class GraphPanel : JComponent() {
         }
     }
 
-    private inner class DeleteAction(name: String) : AbstractAction(name) {
-
-        override fun actionPerformed(e: ActionEvent) {
-            val iter = vertexes.listIterator()
-            while (iter.hasNext()) {
-                val n = iter.next()
-                if (n.isSelected) {
-                    deleteEdges(n)
-                    iter.remove()
-                }
-            }
-            repaint()
-        }
-
-        private fun deleteEdges(n: Vertex) {
-            val iter = edges.listIterator()
-            while (iter.hasNext()) {
-                val e = iter.next()
-                if (e.n1 === n || e.n2 === n) {
-                    iter.remove()
-                }
-            }
-        }
-    }
-
-
     /**
      * An Edge is a pair of Nodes.
      */
-    inner class Edge(val n1: Vertex, val n2: Vertex) {
+    private inner class Edge(private val n1: Vertex, private val n2: Vertex) {
 
         fun draw(g: Graphics) {
             val p1 = n1.location
@@ -380,11 +339,7 @@ class GraphPanel : JComponent() {
             return rotation
         }
 
-        fun center(bounds: Rectangle2D): Point2D {
-            return Point2D.Double(bounds.centerX, bounds.centerY)
-        }
-
-        fun getPointOnCircle(center: Point2D, radians: Double, radius: Double): Point2D {
+        private fun getPointOnCircle(center: Point2D, radians: Double, radius: Double): Point2D {
             var radians = radians
 
             val x = center.x
@@ -412,7 +367,7 @@ class GraphPanel : JComponent() {
     /**
      * A Node represents a node in a graph.
      */
-    class Vertex(val location: Point, private var text: String) {
+    private inner class Vertex(val location: Point, private var text: String) {
         /**
          * Return true if this node is selected.
          */

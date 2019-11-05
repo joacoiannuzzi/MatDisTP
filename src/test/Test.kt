@@ -1,4 +1,4 @@
-//import FlowNetwork
+//import main.FlowNetwork
 //import org.junit.Before
 //import org.junit.Test
 //import kotlin.test.assertEquals

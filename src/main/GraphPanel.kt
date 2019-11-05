@@ -12,7 +12,6 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-
 class GraphPanel : JComponent() {
 
     private val control = ControlPanel()
@@ -49,8 +48,8 @@ class GraphPanel : JComponent() {
         if (selecting) {
             g.color = darkGray
             g.drawRect(
-                mouseRect.x, mouseRect.y,
-                mouseRect.width, mouseRect.height
+                    mouseRect.x, mouseRect.y,
+                    mouseRect.width, mouseRect.height
             )
         }
     }
@@ -175,17 +174,17 @@ class GraphPanel : JComponent() {
             if (selecting) {
                 mouseRect.run {
                     setBounds(
-                        mousePt.x.coerceAtMost(e.x),
-                        mousePt.y.coerceAtMost(e.y),
-                        abs(mousePt.x - e.x),
-                        abs(mousePt.y - e.y)
+                            mousePt.x.coerceAtMost(e.x),
+                            mousePt.y.coerceAtMost(e.y),
+                            abs(mousePt.x - e.x),
+                            abs(mousePt.y - e.y)
                     )
                 }
                 selectRect()
             } else {
                 delta.setLocation(
-                    e.x - mousePt.x,
-                    e.y - mousePt.y
+                        e.x - mousePt.x,
+                        e.y - mousePt.y
                 )
                 updatePosition(delta)
                 mousePt = e.point
@@ -219,10 +218,10 @@ class GraphPanel : JComponent() {
         override fun actionPerformed(e: ActionEvent) {
             if (vertexes.size < 2) {
                 JOptionPane.showMessageDialog(
-                    null,
-                    "No enough vertexes",
-                    "WARNING_MESSAGE",
-                    JOptionPane.WARNING_MESSAGE
+                        null,
+                        "No enough vertexes",
+                        "WARNING_MESSAGE",
+                        JOptionPane.WARNING_MESSAGE
                 )
             } else {
                 val maxFlow = flowNetwork.calculateMaxFlow(0, flowNetwork.order() - 1)
@@ -279,28 +278,27 @@ class GraphPanel : JComponent() {
             val p2 = n2.location
             g.color = darkGray
             val edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
-            g.drawString("" + edge.capacity + ", " + edge.flow, p1.x / 2, p1.x * 2)
-            drawArrow(g, p1, p2)
 
-
-        }
-
-        private fun drawArrow(g: Graphics, circle1: Point2D, circle2: Point2D) {
-
+            //Draw arrow
             val g2d = g as Graphics2D
-            val from = angleBetween(circle1, circle2)
-            val to = angleBetween(circle2, circle1)
+            val from = angleBetween(p1, p2)
+            val to = angleBetween(p2, p1)
 
-            val pointFrom = getPointOnCircle(circle1, from)
-            val pointTo = getPointOnCircle(circle2, to)
+            val pointFrom = getPointOnCircle(p1, from)
+            val pointTo = getPointOnCircle(p2, to)
+
+            val xValue = ((pointFrom.x + pointTo.x) / 2).toFloat()
+            val yValue = ((pointFrom.y + pointTo.y) / 2).toFloat()
+
+            g.drawString("" + edge.capacity + ", " + edge.flow, xValue, yValue) //capacity + flow
 
             val line = Line2D.Double(pointFrom, pointTo)
             g2d.draw(line)
             g2d.color = MAGENTA
             val arrowHead = ArrowHead()
             val at = AffineTransform.getTranslateInstance(
-                pointTo.x - arrowHead.bounds2D.width / 2.0,
-                pointTo.y
+                    pointTo.x - arrowHead.bounds2D.width / 2.0,
+                    pointTo.y
             )
             at.rotate(from, arrowHead.bounds2D.centerX, 0.0)
             arrowHead.transform(at)
@@ -371,12 +369,12 @@ class GraphPanel : JComponent() {
     private inner class Vertex(val location: Point, private var text: String) {
         /**
          * Return true if this node is selected.
-         */
-        /**
          * Mark this node as selected.
          */
         var isSelected = false
         val b = Rectangle()
+        var isSource = false
+        var isSink = false
 
         init {
             setBoundary(b)
@@ -393,15 +391,14 @@ class GraphPanel : JComponent() {
          * Draw this node.
          */
         fun draw(g: Graphics) {
-            g.color = red
-            g.drawOval(b.x, b.y, b.width, b.height)
-
-            g.drawString(text, b.x + b.width / 2 - text.length / 2, b.y + b.height / 2)
-
-            if (isSelected) {
-                g.color = black
-                g.drawOval(b.x, b.y, b.width, b.height)
+            when {
+                isSelected -> g.color = black
+                isSource -> g.color = blue
+                isSink -> g.color = green
+                else -> g.color = red
             }
+            g.drawOval(b.x, b.y, b.width, b.height)
+            g.drawString(text, b.x + b.width / 2 - text.length, b.y + b.height / 2)
         }
 
         /**

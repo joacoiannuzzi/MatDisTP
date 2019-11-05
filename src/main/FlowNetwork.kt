@@ -104,7 +104,6 @@ class FlowNetwork<T>(capacity: Int = 10) : FlowNetworkInterface<T> {
 
     private data class Tag(val parent: Int, val flow: Int)
 
-
     /**
      *@param source index of vertex from where to start the calculations
      */

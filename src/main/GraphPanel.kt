@@ -25,14 +25,19 @@ class GraphPanel : JComponent() {
     private var mousePt = Point(WIDE / 2, HIGH / 2)
     private val mouseRect = Rectangle()
     private var selecting = false
-    private var connecting = false
     private var selectedForConnect: Vertex? = null
-    private var choosingSource = false
-    private var choosingSink = false
     private var source = -1
     private var sink = -1
+    private var currentState = State.None
 
     private val flowNetwork = FlowNetwork<String>()
+
+    enum class State {
+        ChoosingSource,
+        ChoosingSink,
+        Connecting,
+        None
+    }
 
     init {
         this.isOpaque = true
@@ -71,7 +76,7 @@ class GraphPanel : JComponent() {
             edges.add(Edge(node1, node2))
             flowNetwork[vertexes.indexOf(node1), vertexes.indexOf(node2)] = capacity
         }
-        connecting = false
+        currentState = State.None
         selectedForConnect = null
         repaint()
     }
@@ -81,24 +86,27 @@ class GraphPanel : JComponent() {
         val vertex = selected[0]
         vertex.isSource = true
         source = vertexes.indexOf(vertex)
-        choosingSource = false
-        choosingSink = true
+        currentState = State.ChoosingSink
+        selectNone()
+        repaint()
     }
 
     private fun chooseSink() {
         getSelected()
         val vertex = selected[0]
-        vertex.isSink = true
         sink = vertexes.indexOf(vertex)
-        choosingSink = false
+        if (source == sink) return
+        vertex.isSink = true
+        currentState = State.None
         calculateMaxFlow()
+
     }
 
     private fun calculateMaxFlow() {
         val maxFlow = flowNetwork.calculateMaxFlow(source, sink)
-        JOptionPane.showMessageDialog(null, "Max flow: $maxFlow")
         selectNone()
         repaint()
+        JOptionPane.showMessageDialog(null, "Max flow: $maxFlow")
     }
 
     /**
@@ -183,9 +191,9 @@ class GraphPanel : JComponent() {
         override fun mousePressed(e: MouseEvent) {
             mousePt = e.point
             when {
-                connecting -> if (selectOne(mousePt)) connect()
-                choosingSource -> if (selectOne(mousePt)) chooseSource()
-                choosingSink -> if (selectOne(mousePt)) chooseSink()
+                currentState == State.Connecting -> if (selectOne(mousePt)) connect()
+                currentState == State.ChoosingSource -> if (selectOne(mousePt)) chooseSource()
+                currentState == State.ChoosingSink -> if (selectOne(mousePt)) chooseSink()
                 e.isShiftDown -> selectToggle(mousePt)
                 selectOne(mousePt) -> selecting = false
                 else -> {
@@ -262,8 +270,7 @@ class GraphPanel : JComponent() {
                     it.isSink = false
                 }
                 flowNetwork.resetFlow()
-                choosingSource = true
-
+                currentState = State.ChoosingSource
             }
         }
     }
@@ -300,7 +307,7 @@ class GraphPanel : JComponent() {
 
             if (selected.size == 1) {
                 selectedForConnect = selected[0]
-                connecting = true
+                currentState = State.Connecting
             }
 
         }
@@ -311,7 +318,7 @@ class GraphPanel : JComponent() {
      */
     private inner class Edge(private val n1: Vertex, private val n2: Vertex) {
 
-        var edge: FlowNetwork.Edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
+        var edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
 
         fun draw(g: Graphics) {
             val p1 = n1.location
@@ -328,6 +335,7 @@ class GraphPanel : JComponent() {
             val xValue = ((pointFrom.x + pointTo.x) / 2).toFloat()
             val yValue = ((pointFrom.y + pointTo.y) / 2).toFloat()
 
+            g.font = Font("Arial", Font.PLAIN, 17)
             g.drawString("" + edge.capacity + ", " + edge.flow, xValue, yValue) //capacity + flow
 
             val line = Line2D.Double(pointFrom, pointTo)
@@ -416,6 +424,7 @@ class GraphPanel : JComponent() {
         val b = Rectangle()
         var isSource = false
         var isSink = false
+        var font = Font("Arial", Font.PLAIN, 25)
 
         init {
             setBoundary(b)
@@ -439,10 +448,12 @@ class GraphPanel : JComponent() {
                 else -> g.color = red
             }
             g.drawOval(b.x, b.y, b.width, b.height)
+            g.font = font
             var fm = g.fontMetrics
             var textWidth = fm.getStringBounds(text, g).width
-            while (textWidth > RADIUS * 2 - 2) {
-                g.font = Font(g.font.fontName, g.font.style, g.font.size - 1)
+            while (textWidth > RADIUS * 2 - 1) {
+                font = Font(font.fontName, font.style, font.size - 1)
+                g.font = font
                 fm = g.fontMetrics
                 textWidth = fm.getStringBounds(text, g).width
             }

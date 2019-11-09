@@ -414,12 +414,7 @@ class GraphPanel : JComponent() {
      * A Node represents a node in a graph.
      */
     private inner class Vertex(val location: Point, private var text: String) {
-        /**
-         * Return true if this node is selected.
-         */
-        /**
-         * Mark this node as selected.
-         */
+
         var isSelected = false
         val b = Rectangle()
         var isSource = false

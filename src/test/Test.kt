@@ -31,7 +31,7 @@ class Test {
 
     @Test
     fun `The alpha should be 9`() {
-        assertEquals(9, t.alpha())
+        assertEquals(9, t.amountOfEdges())
     }
 
     @Test

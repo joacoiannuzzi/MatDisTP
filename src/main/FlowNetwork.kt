@@ -59,7 +59,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
      *
      *  O(1)
      */
-    fun alpha() = alpha
+    fun amountOfEdges() = alpha
 
     /**
      * Add the vertex 'v' to FlowNetwork
@@ -136,7 +136,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
      *
      *  O(1)
      */
-    fun remainingFlow(v: Int, w: Int) = matrix[v][w].capacity - matrix[v][w].flow
+    private fun remainingFlow(v: Int, w: Int) = matrix[v][w].capacity - matrix[v][w].flow
 
 
     /**
@@ -144,7 +144,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
      *
      *  O(1)
      */
-    fun notSaturated(v: Int, w: Int) = remainingFlow(v, w) > 0
+    private fun notSaturated(v: Int, w: Int) = remainingFlow(v, w) > 0
 
 
     /**
@@ -153,7 +153,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
      * and fills the 'tags' array with the parent of each vertex
      * and the remaining flow
      *
-     *  O(order + alpha)
+     *  O(alpha)
      */
     private fun lookForPath(source: Int, end: Int, tags: Array<Tag>): Boolean {
         // creates an array with all values false,
@@ -184,8 +184,8 @@ class FlowNetwork<T>(capacity: Int = 10) {
         return visited[end]
     }
 
-    private data class Tag(val parent: Int, val flow: Int)
 
+    private data class Tag(val parent: Int, val flow: Int)
 
     /**
      * @param source index of vertex from where to start the flow
@@ -199,7 +199,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
      */
     fun calculateMaxFlow(source: Int, sink: Int): Int {
 
-        // create array of length 'order' with all values nil tags
+        // create array of length 'order' with all values Tag(-1, inf)
         val tags = Array(order) { Tag(-1, inf) }
 
         // set initial max flow to 0

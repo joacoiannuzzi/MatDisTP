@@ -73,8 +73,7 @@ class GraphPanel : JComponent() {
         val node2 = selected[0]
         if (node1 != node2) {
             val capacity = JOptionPane.showInputDialog("Enter capacity:").toInt()
-            edges.add(Edge(node1, node2))
-            flowNetwork.addEdge(vertexes.indexOf(node1), vertexes.indexOf(node2), capacity)
+            addEdge(node1, node2, capacity)
         }
         currentState = State.None
         selectedForConnect = null
@@ -107,6 +106,18 @@ class GraphPanel : JComponent() {
         selectNone()
         repaint()
         JOptionPane.showMessageDialog(null, "Max flow: $maxFlow")
+    }
+
+    private fun addEdge(node1: Vertex, node2: Vertex, capacity: Int) {
+        edges.add(Edge(node1, node2))
+        flowNetwork.addEdge(vertexes.indexOf(node1), vertexes.indexOf(node2), capacity)
+    }
+
+    private fun addVertex(p: Point, text: String): Vertex {
+        val n = Vertex(p, text) // create node
+        flowNetwork.addVertex(text)
+        vertexes.add(n)
+        return n
     }
 
     /**
@@ -281,11 +292,7 @@ class GraphPanel : JComponent() {
             selectNone()
             val p = mousePt.location
             val text = JOptionPane.showInputDialog("Enter text:")
-            val n = Vertex(p, text) // create node
-            flowNetwork.addVertex(text)
-            n.isSelected = true
-            vertexes.add(n)
-            selectNone()
+            addVertex(p, text)
             repaint()
         }
     }
@@ -466,6 +473,24 @@ class GraphPanel : JComponent() {
 
     }
 
+    private fun testWithGraph() {
+        val a = addVertex(Point(50, 250), "A")
+        val b = addVertex(Point(200, 125), "B")
+        val d = addVertex(Point(400, 125), "D")
+        val g = addVertex(Point(200, 425), "G")
+        val h = addVertex(Point(400, 425), "H")
+        val z = addVertex(Point(550, 250), "Z")
+        addEdge(a, b, 5)
+        addEdge(a, g, 7)
+        addEdge(b, h, 6)
+        addEdge(b, d, 4)
+        addEdge(g, h, 5)
+        addEdge(h, d, 2)
+        addEdge(d, z, 5)
+        addEdge(h, z, 6)
+        addEdge(g, b, 5)
+    }
+
     companion object {
 
         private const val WIDE = 640
@@ -484,6 +509,7 @@ class GraphPanel : JComponent() {
                 f.pack()
                 f.isLocationByPlatform = true
                 f.isVisible = true
+                gp.testWithGraph()
             }
         }
     }

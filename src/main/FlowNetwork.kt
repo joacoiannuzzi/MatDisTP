@@ -107,7 +107,7 @@ class FlowNetwork<T>(capacity: Int = 10) {
     /**
      * Resets the flow of each edge to 0
      *
-     *  O(n2)
+     *  O(order^2)
      */
     fun resetFlow() {
         matrix.forEach { array ->

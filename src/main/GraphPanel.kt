@@ -74,7 +74,7 @@ class GraphPanel : JComponent() {
         if (node1 != node2) {
             val capacity = JOptionPane.showInputDialog("Enter capacity:").toInt()
             edges.add(Edge(node1, node2))
-            flowNetwork[vertexes.indexOf(node1), vertexes.indexOf(node2)] = capacity
+            flowNetwork.addEdge(vertexes.indexOf(node1), vertexes.indexOf(node2), capacity)
         }
         currentState = State.None
         selectedForConnect = null
@@ -318,7 +318,7 @@ class GraphPanel : JComponent() {
      */
     private inner class Edge(private val n1: Vertex, private val n2: Vertex) {
 
-        var edge = flowNetwork[vertexes.indexOf(n1), vertexes.indexOf(n2)]
+        var edge = flowNetwork.getEdge(vertexes.indexOf(n1), vertexes.indexOf(n2))
 
         fun draw(g: Graphics) {
             val p1 = n1.location
@@ -399,7 +399,7 @@ class GraphPanel : JComponent() {
 
         }
 
-        inner class ArrowHead : Path2D.Double() {
+        private inner class ArrowHead : Path2D.Double() {
             init {
                 val size = 10
                 moveTo(0.0, size.toDouble())
